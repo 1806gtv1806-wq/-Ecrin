@@ -23,7 +23,7 @@ jobs:
       IOS_DISTRIBUTION_CERTIFICATE_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}
       IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
       IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
-      APP_BUNDLE_ID: ch.halo.cubemaster.playground
+      APP_BUNDLE_ID: ch.halo.cubemaster.playgrounds
     steps:
       - name: Check out repository
         uses: actions/checkout@v4

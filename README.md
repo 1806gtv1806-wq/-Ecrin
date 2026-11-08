@@ -95,7 +95,7 @@ Le workflow `.github/workflows/apple-build.yml` compile manuellement l’app pou
 
 Le workflow manuel `.github/workflows/testflight.yml` archive et envoie l’app à App Store Connect. Avant sa première exécution, les prérequis Apple doivent être configurés :
 
-1. Avoir un abonnement Apple Developer actif et une fiche App Store Connect existante pour `ch.halo.cubemaster.playground`.
+1. Avoir un abonnement Apple Developer actif et une fiche App Store Connect existante pour `ch.halo.cubemaster.playgrounds`.
 2. Dans Apple Developer, activer CloudKit pour cet identifiant et associer le conteneur `iCloud.com.ecrin.app`; le profil de distribution **App Store Connect** doit inclure cet entitlement iCloud.
 3. Créer un certificat **Apple Distribution** et l’exporter en `.p12` avec un mot de passe.
 4. Créer une clé API App Store Connect avec le rôle requis pour envoyer des builds.

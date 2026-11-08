@@ -18,7 +18,7 @@ targets:
           - _ecrin-handoff._tcp
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: ch.halo.cubemaster.playground
+        PRODUCT_BUNDLE_IDENTIFIER: ch.halo.cubemaster.playgrounds
         SWIFT_VERSION: "5.9"
         CODE_SIGN_ENTITLEMENTS: Ecrin.entitlements
         TARGETED_DEVICE_FAMILY: "1,2"
