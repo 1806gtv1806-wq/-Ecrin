@@ -11,7 +11,7 @@ final class MemoryItem {
     var visualLabelsStorage: String = "[]"
     var reminderID: UUID = UUID()
     var reminderAt: Date? = nil
-    var createdAt: Date = .now
+    var createdAt: Date = Date.now
     var isSelected: Bool = false
 
     var tags: [String] {
