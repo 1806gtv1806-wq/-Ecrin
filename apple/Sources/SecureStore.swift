@@ -3,7 +3,7 @@ import CoreFoundation
 import Security
 
 enum SecureStore {
-    private static let service = Bundle.main.bundleIdentifier ?? "com.ecrin.app"
+    private static let service = Bundle.main.bundleIdentifier ?? "ch.halo.cubemaster.playground"
     private static let accessTokenKey = "ai.apiAccessToken"
 
     static func readAPIAccessToken() throws -> String? {
