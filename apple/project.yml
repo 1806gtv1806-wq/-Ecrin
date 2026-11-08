@@ -11,6 +11,7 @@ targets:
     sources:
       - Sources
     info:
+      path: Ecrin-iOS-Info.plist
       properties:
         NSLocalNetworkUsageDescription: ÉCRIN détecte vos appareils à proximité pour proposer de continuer Einstein sur un autre écran.
         NSBonjourServices:
@@ -32,6 +33,7 @@ targets:
     sources:
       - Sources
     info:
+      path: Ecrin-macOS-Info.plist
       properties:
         NSLocalNetworkUsageDescription: ÉCRIN détecte vos appareils à proximité pour proposer de continuer Einstein sur un autre écran.
         NSBonjourServices:
