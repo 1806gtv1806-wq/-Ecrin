@@ -1,0 +1,1 @@
+"""Ecrin application package."""

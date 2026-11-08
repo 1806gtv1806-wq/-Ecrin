@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f4ee" />
+    <meta
+      name="description"
+      content="Ecrin vous aide à organiser vos idées et à retrouver l’essentiel."
+    />
+    <title>Ecrin — votre mémoire, à portée de main</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="liquid-background" aria-hidden="true">
+      <span class="liquid-orb orb-olive"></span>
+      <span class="liquid-orb orb-lavender"></span>
+      <span class="liquid-orb orb-sand"></span>
+    </div>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/ui" aria-label="Ecrin, accueil">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M16 3.5 27 9.75v12.5L16 28.5 5 22.25V9.75L16 3.5Z" />
+              <path d="m5.5 10 10.5 6 10.5-6M16 16v12" />
+            </svg>
+          </span>
+          <span>ecrin<span class="brand-period">.</span></span>
+        </a>
+        <div class="header-note">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>Votre espace personnel</span>
+        </div>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <div class="intro-copy">
+            <p class="eyebrow">Un esprit libre, des idées bien gardées</p>
+            <h1 id="page-title">Tout ce qui compte,<br /><span>au même endroit.</span></h1>
+            <p class="intro-description">
+              Déposez une pensée. Ecrin l’organise et vous aide à en retrouver l’essentiel.
+            </p>
+          </div>
+          <div class="intro-art" aria-hidden="true">
+            <span class="art-sun"></span>
+            <span class="art-orbit orbit-one"></span>
+            <span class="art-orbit orbit-two"></span>
+            <span class="art-card art-card-back"></span>
+            <span class="art-card art-card-front">
+              <span></span><span></span><span></span>
+            </span>
+            <span class="art-spark">✳</span>
+          </div>
+        </section>
+
+        <section class="meta-strip" aria-label="Comment Ecrin organise vos idées">
+          <article class="meta-card">
+            <span class="meta-index">01</span>
+            <div>
+              <span class="meta-label">Comprendre</span>
+              <strong>Classification intelligente</strong>
+            </div>
+            <span class="meta-arrow" aria-hidden="true">↗</span>
+          </article>
+          <article class="meta-card">
+            <span class="meta-index">02</span>
+            <div>
+              <span class="meta-label">Clarifier</span>
+              <strong>Synthèse automatique</strong>
+            </div>
+            <span class="meta-arrow" aria-hidden="true">↗</span>
+          </article>
+          <article class="meta-card">
+            <span class="meta-index">03</span>
+            <div>
+              <span class="meta-label">Retrouver</span>
+              <strong>Mémoire structurée</strong>
+            </div>
+            <span class="meta-arrow" aria-hidden="true">↗</span>
+          </article>
+        </section>
+
+        <div class="layout">
+          <section class="panel control-panel" aria-labelledby="capture-title">
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">Votre espace de capture</p>
+                <h2 id="capture-title">Une idée à garder ?</h2>
+              </div>
+              <span class="panel-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </span>
+            </div>
+            <p class="panel-description">Commencez par un titre, puis laissez vos idées venir.</p>
+
+            <label class="field">
+              <span>Titre <span class="optional">— facultatif</span></span>
+              <input id="titleInput" type="text" placeholder="Ex. Une idée pour le week-end" />
+            </label>
+
+            <label class="field">
+              <span>Votre note</span>
+              <textarea
+                id="contentInput"
+                rows="8"
+                placeholder="Collez un texte, notez une idée, gardez un extrait…"
+              ></textarea>
+            </label>
+
+            <div class="actions">
+              <button class="primary" id="scanBtn" type="button">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M8.8 2.5 7.3 7.3 2.5 8.8l4.8 1.5 1.5 4.8 1.5-4.8 4.8-1.5-4.8-1.5-1.5-4.8ZM15.7 12.5l-.8 2.4-2.4.8 2.4.8.8 2.4.8-2.4 2.4-.8-2.4-.8-.8-2.4Z" />
+                </svg>
+                Analyser
+              </button>
+              <button class="secondary" id="classifyBtn" type="button">Classer</button>
+              <button class="text-button" id="saveBtn" type="button">
+                Créer une notice <span aria-hidden="true">↗</span>
+              </button>
+            </div>
+            <p class="privacy-note" id="privacyNote">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <rect x="3" y="7" width="10" height="7" rx="2" />
+                <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+              </svg>
+              Vos idées restent dans votre espace.
+            </p>
+          </section>
+
+          <section class="panel output-panel" aria-labelledby="analysis-title">
+            <div class="panel-heading output-heading">
+              <div>
+                <p class="section-kicker">Le regard d’Ecrin</p>
+                <h2 id="analysis-title">En un coup d’œil</h2>
+              </div>
+              <span class="analysis-status" id="analysisStatus" data-state="ready" role="status" aria-live="polite" aria-atomic="true">
+                <span aria-hidden="true"></span>
+                <span id="analysisStatusText">Prêt à analyser</span>
+              </span>
+            </div>
+
+            <div id="resultBox" class="result-box empty" aria-live="polite" aria-atomic="true">
+              <div class="empty-illustration" aria-hidden="true">
+                <span class="empty-orbit"></span>
+                <span class="empty-spark">✳</span>
+                <span class="empty-page"></span>
+              </div>
+              <p>Votre synthèse prendra forme ici.</p>
+              <span>Ajoutez une note pour commencer.</span>
+            </div>
+
+            <div class="legend">
+              <div class="notes-heading">
+                <div>
+                  <p class="section-kicker">Votre collection</p>
+                  <h3>Notices récentes</h3>
+                </div>
+                <span class="collection-mark" aria-hidden="true">✳</span>
+              </div>
+              <div id="notesList" class="notes-list" aria-live="polite"></div>
+            </div>
+          </section>
+        </div>
+      </main>
+      <footer class="footer">
+        <span>ecrin<span class="brand-period">.</span></span>
+        <span>Fait pour garder l’essentiel.</span>
+      </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

@@ -10,6 +10,11 @@ targets:
     platform: iOS
     sources:
       - Sources
+    info:
+      properties:
+        NSLocalNetworkUsageDescription: ÉCRIN détecte vos appareils à proximité pour proposer de continuer Einstein sur un autre écran.
+        NSBonjourServices:
+          - _ecrin-handoff._tcp
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ecrin.app
@@ -19,11 +24,18 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Ecrin
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: Ecrin analyse les images que vous choisissez.
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Ecrin utilise le microphone lorsque vous dictez une question à Einstein.
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: Ecrin transcrit votre question vocale pour Einstein.
   Ecrin-macOS:
     type: application
     platform: macOS
     sources:
       - Sources
+    info:
+      properties:
+        NSLocalNetworkUsageDescription: ÉCRIN détecte vos appareils à proximité pour proposer de continuer Einstein sur un autre écran.
+        NSBonjourServices:
+          - _ecrin-handoff._tcp
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ecrin.app.macos
@@ -32,3 +44,5 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Ecrin
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: Ecrin analyse les images que vous choisissez.
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Ecrin utilise le microphone lorsque vous dictez une question à Einstein.
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: Ecrin transcrit votre question vocale pour Einstein.
