@@ -411,7 +411,12 @@ struct EinsteinView: View {
 
     private func relevantMemory(for prompt: String) -> [MemoryItem] {
         guard activeProfile.canUseMemory else { return [] }
-        let terms = Set(prompt.lowercased().split { !$0.isLetter && !$0.isNumber }.filter { $0.count > 2 })
+        let terms = Set(
+            prompt.lowercased()
+                .split { !$0.isLetter && !$0.isNumber }
+                .filter { $0.count > 2 }
+                .map(String.init)
+        )
         guard !terms.isEmpty else { return [] }
         return memories
             .compactMap { item -> (MemoryItem, Int)? in

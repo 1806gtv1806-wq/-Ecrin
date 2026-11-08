@@ -29,25 +29,23 @@ struct CaptureIdeaIntent: AppIntent {
 
 struct EcrinShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
-        [
-            AppShortcut(
-                intent: OpenEinsteinIntent(),
-                phrases: [
-                    "Parler à Einstein dans \(.applicationName)",
-                    "Demander à Einstein dans \(.applicationName)"
-                ],
-                shortTitle: "Einstein",
-                systemImageName: "sparkles"
-            ),
-            AppShortcut(
-                intent: CaptureIdeaIntent(),
-                phrases: [
-                    "Dicter une idée dans \(.applicationName)",
-                    "Garder une idée avec \(.applicationName)"
-                ],
-                shortTitle: "NOVA",
-                systemImageName: "waveform"
-            )
-        ]
+        AppShortcut(
+            intent: OpenEinsteinIntent(),
+            phrases: [
+                "Parler à Einstein dans \(.applicationName)",
+                "Demander à Einstein dans \(.applicationName)"
+            ],
+            shortTitle: "Einstein",
+            systemImageName: "sparkles"
+        )
+        AppShortcut(
+            intent: CaptureIdeaIntent(),
+            phrases: [
+                "Dicter une idée dans \(.applicationName)",
+                "Garder une idée avec \(.applicationName)"
+            ],
+            shortTitle: "NOVA",
+            systemImageName: "waveform"
+        )
     }
 }
