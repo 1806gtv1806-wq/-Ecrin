@@ -90,3 +90,22 @@ Le client natif est un socle initial : le classement, la génération de notices
 ### Compilation Xcode sur GitHub Actions
 
 Le workflow `.github/workflows/apple-build.yml` compile manuellement l’app pour le simulateur iOS sur un runner macOS, avec une durée maximale de 20 minutes par exécution. Il ne se lance pas automatiquement sur les push afin d’éviter une consommation inattendue. Lancez-le depuis **Actions → Apple build → Run workflow** après avoir envoyé le workflow sur GitHub. Cette limite par exécution ne constitue pas un plafond mensuel de 500 minutes; configurez votre budget dans les paramètres de facturation GitHub, car le quota et la facturation macOS dépendent du forfait et du dépôt.
+
+### Distribution TestFlight
+
+Le workflow manuel `.github/workflows/testflight.yml` archive et envoie l’app à App Store Connect. Avant sa première exécution, les prérequis Apple doivent être configurés :
+
+1. Avoir un abonnement Apple Developer actif et créer l’app `com.ecrin.app` dans App Store Connect.
+2. Dans Apple Developer, activer CloudKit pour cet identifiant et créer le profil de distribution **App Store Connect** correspondant; le profil doit inclure l’entitlement iCloud `iCloud.com.ecrin.app`.
+3. Créer un certificat **Apple Distribution** et l’exporter en `.p12` avec un mot de passe.
+4. Créer une clé API App Store Connect avec le rôle requis pour envoyer des builds.
+5. Ajouter dans les secrets GitHub du dépôt les noms suivants (valeurs encodées en Base64 sans retour à la ligne pour les fichiers) :
+   - `APPLE_TEAM_ID`
+   - `IOS_DISTRIBUTION_CERTIFICATE_BASE64` — contenu du `.p12`
+   - `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD`
+   - `IOS_PROVISIONING_PROFILE_BASE64` — profil `.mobileprovision`
+   - `APP_STORE_CONNECT_API_KEY_ID`
+   - `APP_STORE_CONNECT_ISSUER_ID`
+   - `APP_STORE_CONNECT_API_KEY_BASE64` — contenu du fichier `.p8`
+
+Les certificats et clés privées ne doivent jamais être commités ni envoyés dans la conversation. Une fois les prérequis enregistrés, lancez **Actions → TestFlight → Run workflow**. Le numéro de build est incrémenté automatiquement par GitHub Actions; la version marketing de départ est `1.0.0`. Apple traite ensuite l’envoi dans App Store Connect; il faut encore sélectionner les testeurs dans TestFlight. Le workflow n’installe pas l’app directement sur un iPhone et ne contourne pas le traitement ou les contrôles d’Apple.
