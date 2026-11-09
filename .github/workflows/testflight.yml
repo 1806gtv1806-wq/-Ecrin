@@ -58,9 +58,97 @@ jobs:
           PROFILE_PATH="$RUNNER_TEMP/ecrin-app-store.mobileprovision"
           API_KEY_PATH="$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
 
-          printf '%s' "$IOS_DISTRIBUTION_CERTIFICATE_BASE64" | base64 -D > "$CERTIFICATE_PATH"
-          printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | base64 -D > "$PROFILE_PATH"
-          printf '%s' "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 -D > "$API_KEY_PATH"
+          if ! printf '%s' "$IOS_DISTRIBUTION_CERTIFICATE_BASE64" | base64 -D > "$CERTIFICATE_PATH"; then
+            echo "::error::IOS_DISTRIBUTION_CERTIFICATE_BASE64 is not valid Base64."
+            exit 1
+          fi
+          if ! openssl pkcs12 -in "$CERTIFICATE_PATH" \
+            -passin env:IOS_DISTRIBUTION_CERTIFICATE_PASSWORD -noout; then
+            echo "::error::The distribution certificate is not a valid .p12 or its password is incorrect."
+            exit 1
+          fi
+          if ! printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | base64 -D > "$PROFILE_PATH"; then
+            echo "::error::IOS_PROVISIONING_PROFILE_BASE64 is not valid Base64."
+            exit 1
+          fi
+          if ! printf '%s' "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 -D > "$API_KEY_PATH"; then
+            echo "::error::APP_STORE_CONNECT_API_KEY_BASE64 is not valid Base64."
+            exit 1
+          fi
+
+          PROFILE_PLIST="$RUNNER_TEMP/ecrin-profile.plist"
+          if ! security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST"; then
+            echo "::error::The provisioning profile secret is not a valid Apple .mobileprovision file. Download a fresh App Store profile and Base64-encode the entire file."
+            exit 1
+          fi
+          python3 - "$PROFILE_PLIST" "$CERTIFICATE_PATH" <<'PY'
+          import datetime
+          import hashlib
+          import os
+          import plistlib
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          def fail(message):
+              print(f"::error::{message}")
+              raise SystemExit(1)
+
+          profile_path, certificate_path = map(Path, sys.argv[1:])
+          with profile_path.open("rb") as profile_file:
+              profile = plistlib.load(profile_file)
+
+          team_id = os.environ["APPLE_TEAM_ID"]
+          bundle_id = os.environ["APP_BUNDLE_ID"]
+          expected_app_id = f"{team_id}.{bundle_id}"
+          entitlements = profile.get("Entitlements", {})
+          actual_app_id = entitlements.get("application-identifier")
+          if actual_app_id != expected_app_id:
+              fail(
+                  "The provisioning profile does not match the app. "
+                  f"Expected application-identifier {expected_app_id!r}, got {actual_app_id!r}."
+              )
+          if team_id not in profile.get("TeamIdentifier", []):
+              fail("The provisioning profile belongs to a different Apple Developer team.")
+
+          expiration = profile.get("ExpirationDate")
+          if isinstance(expiration, datetime.datetime) and expiration.tzinfo is None:
+              expiration = expiration.replace(tzinfo=datetime.timezone.utc)
+          if not isinstance(expiration, datetime.datetime) or expiration <= datetime.datetime.now(datetime.timezone.utc):
+              fail("The provisioning profile is expired or has no valid expiration date.")
+
+          certificates = profile.get("DeveloperCertificates", [])
+          if not certificates:
+              fail("The provisioning profile contains no distribution certificates.")
+
+          cert_pem = subprocess.run(
+              [
+                  "openssl", "pkcs12", "-in", str(certificate_path),
+                  "-passin", "env:IOS_DISTRIBUTION_CERTIFICATE_PASSWORD",
+                  "-clcerts", "-nokeys",
+              ],
+              check=True,
+              capture_output=True,
+          ).stdout
+          cert_der = subprocess.run(
+              ["openssl", "x509", "-outform", "DER"],
+              input=cert_pem,
+              check=True,
+              capture_output=True,
+          ).stdout
+          cert_fingerprint = hashlib.sha256(cert_der).digest()
+          profile_fingerprints = {hashlib.sha256(cert).digest() for cert in certificates}
+          if cert_fingerprint not in profile_fingerprints:
+              fail(
+                  "The provisioning profile does not include the Apple Distribution certificate "
+                  "configured in IOS_DISTRIBUTION_CERTIFICATE_BASE64."
+              )
+
+          print(
+              f"Validated App Store profile {profile.get('Name', '(unnamed)')!r} "
+              f"for {bundle_id}; it matches the configured distribution certificate."
+          )
+          PY
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
@@ -73,8 +161,6 @@ jobs:
             -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
 
-          PROFILE_PLIST="$RUNNER_TEMP/ecrin-profile.plist"
-          security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST"
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$PROFILE_PLIST")
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print Name' "$PROFILE_PLIST")
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
