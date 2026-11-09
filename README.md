@@ -99,13 +99,13 @@ Le workflow manuel `.github/workflows/testflight.yml` archive et envoie l’app 
 2. Dans Apple Developer, vérifier que CloudKit est activé pour cet identifiant et que le conteneur `iCloud.com.memoryos.brain26` est associé; le profil de distribution **App Store Connect** doit inclure cet entitlement iCloud.
 3. Créer un certificat **Apple Distribution** et l’exporter en `.p12` avec un mot de passe.
 4. Créer une clé API App Store Connect avec le rôle requis pour envoyer des builds.
-5. Ajouter dans les secrets GitHub du dépôt les noms suivants (valeurs encodées en Base64 sans retour à la ligne pour les fichiers) :
+5. Ajouter dans les secrets GitHub du dépôt les noms suivants (valeurs encodées en Base64 sans retour à la ligne pour les fichiers, sauf indication contraire) :
    - `APPLE_TEAM_ID`
    - `IOS_DISTRIBUTION_CERTIFICATE_BASE64` — contenu du `.p12`
    - `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD`
    - `IOS_PROVISIONING_PROFILE_BASE64` — profil `.mobileprovision`
    - `APP_STORE_CONNECT_API_KEY_ID`
    - `APP_STORE_CONNECT_ISSUER_ID`
-   - `APP_STORE_CONNECT_API_KEY_BASE64` — contenu du fichier `.p8`
+   - `APP_STORE_CONNECT_API_KEY_BASE64` — contenu du fichier `.p8`, collé directement au format PEM ou encodé en Base64
 
 Les certificats et clés privées ne doivent jamais être commités ni envoyés dans la conversation. Une fois les prérequis enregistrés, lancez **Actions → TestFlight → Run workflow**. Le numéro de build est incrémenté automatiquement par GitHub Actions; la version marketing de départ est `1.0.0`. Apple traite ensuite l’envoi dans App Store Connect; il faut encore sélectionner les testeurs dans TestFlight. Le workflow n’installe pas l’app directement sur un iPhone et ne contourne pas le traitement ou les contrôles d’Apple.

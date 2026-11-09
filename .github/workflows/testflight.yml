@@ -71,12 +71,14 @@ jobs:
             echo "::error::IOS_PROVISIONING_PROFILE_BASE64 is not valid Base64."
             exit 1
           fi
-          if ! printf '%s' "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 -D > "$API_KEY_PATH"; then
-            echo "::error::APP_STORE_CONNECT_API_KEY_BASE64 is not valid Base64."
+          if [[ "$APP_STORE_CONNECT_API_KEY_BASE64" == *"-----BEGIN PRIVATE KEY-----"* ]]; then
+            printf '%s' "$APP_STORE_CONNECT_API_KEY_BASE64" > "$API_KEY_PATH"
+          elif ! printf '%s' "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 -D > "$API_KEY_PATH"; then
+            echo "::error::APP_STORE_CONNECT_API_KEY_BASE64 must contain a PEM .p8 key or its Base64-encoded file contents."
             exit 1
           fi
           if ! openssl pkey -in "$API_KEY_PATH" -noout; then
-            echo "::error::APP_STORE_CONNECT_API_KEY_BASE64 must decode to the original App Store Connect .p8 private key."
+            echo "::error::APP_STORE_CONNECT_API_KEY_BASE64 must contain a valid App Store Connect .p8 key, either as PEM text or Base64."
             exit 1
           fi
 
