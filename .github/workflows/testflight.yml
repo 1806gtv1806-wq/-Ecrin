@@ -75,6 +75,10 @@ jobs:
             echo "::error::APP_STORE_CONNECT_API_KEY_BASE64 is not valid Base64."
             exit 1
           fi
+          if ! openssl pkey -in "$API_KEY_PATH" -noout; then
+            echo "::error::APP_STORE_CONNECT_API_KEY_BASE64 must decode to the original App Store Connect .p8 private key."
+            exit 1
+          fi
 
           PROFILE_PLIST="$RUNNER_TEMP/ecrin-profile.plist"
           if ! security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST"; then
@@ -226,10 +230,18 @@ jobs:
       - name: Upload build to App Store Connect
         run: |
           set -euo pipefail
+          mapfile -t IPA_FILES < <(find "$RUNNER_TEMP/export" -maxdepth 1 -type f -name '*.ipa' -print)
+          if [[ ${#IPA_FILES[@]} -ne 1 ]]; then
+            echo "::error::Expected exactly one exported .ipa in $RUNNER_TEMP/export; found ${#IPA_FILES[@]}."
+            find "$RUNNER_TEMP/export" -maxdepth 2 -type f -print
+            exit 1
+          fi
+          IPA_PATH="${IPA_FILES[0]}"
+          echo "Uploading $(basename "$IPA_PATH") to App Store Connect."
           xcrun altool \
             --upload-app \
             --type ios \
-            --file "$RUNNER_TEMP/export/Ecrin.ipa" \
+            --file "$IPA_PATH" \
             --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
 
