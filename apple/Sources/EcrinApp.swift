@@ -11,7 +11,7 @@ struct EcrinApp: App {
             let schema = Schema([MemoryItem.self])
             let configuration = ModelConfiguration(
                 schema: schema,
-                cloudKitDatabase: .private("iCloud.com.ecrin.app")
+                cloudKitDatabase: .private("iCloud.com.memoryos.brain26")
             )
             _container = State(initialValue: try ModelContainer(
                 for: schema,
