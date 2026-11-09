@@ -44,7 +44,16 @@ final class SpeechCaptureService: ObservableObject {
         activeRecognitionID = recognitionID
 
         let input = audioEngine.inputNode
-        input.installTap(onBus: 0, bufferSize: 1024, format: input.outputFormat(forBus: 0)) { buffer, _ in
+        let format = input.outputFormat(forBus: 0)
+        guard format.sampleRate > 0, format.channelCount > 0 else {
+            recognitionRequest = nil
+            activeRecognitionID = nil
+#if os(iOS)
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+#endif
+            throw SpeechCaptureError.microphoneUnavailable
+        }
+        input.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
             request.append(buffer)
         }
 
@@ -55,6 +64,9 @@ final class SpeechCaptureService: ObservableObject {
             input.removeTap(onBus: 0)
             recognitionRequest = nil
             activeRecognitionID = nil
+#if os(iOS)
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+#endif
             throw error
         }
         isRecording = true
@@ -150,6 +162,7 @@ enum SpeechCaptureError: LocalizedError {
     case speechPermissionDenied
     case microphonePermissionDenied
     case recognizerUnavailable
+    case microphoneUnavailable
 
     var errorDescription: String? {
         switch self {
@@ -157,8 +170,11 @@ enum SpeechCaptureError: LocalizedError {
             return "Autorisez la reconnaissance vocale dans Réglages pour utiliser la dictée."
         case .microphonePermissionDenied:
             return "Autorisez l’accès au microphone dans Réglages pour dicter une question."
+        case .microphoneUnavailable:
+            return "Aucune entrée audio n’est disponible. Reconnectez le microphone puis réessayez."
         case .recognizerUnavailable:
             return "La reconnaissance vocale française est indisponible pour le moment."
         }
     }
 }
+

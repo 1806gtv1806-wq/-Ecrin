@@ -109,3 +109,10 @@ Le workflow manuel `.github/workflows/testflight.yml` archive et envoie l’app 
    - `APP_STORE_CONNECT_API_KEY_BASE64` — contenu du fichier `.p8`, collé directement au format PEM ou encodé en Base64
 
 Les certificats et clés privées ne doivent jamais être commités ni envoyés dans la conversation. Une fois les prérequis enregistrés, lancez **Actions → TestFlight → Run workflow**. Le numéro de build est incrémenté automatiquement par GitHub Actions; la version marketing de départ est `1.0.0`. Apple traite ensuite l’envoi dans App Store Connect; il faut encore sélectionner les testeurs dans TestFlight. Le workflow n’installe pas l’app directement sur un iPhone et ne contourne pas le traitement ou les contrôles d’Apple.
+
+
+## Développement natif — 9 novembre 2026
+
+La branche de développement remplace les écrans de présentation Organic, Fusion et Verso par des parcours natifs : lecteur audio local et concentration ; assemblage non destructif de mémoires ; lecture locale de photos/PDF/textes avec enregistrement dans MemoryOS. L’import MemoryOS bénéficie de l’OCR des pages PDF scannées. Un mode local explicite et séparé est proposé si le magasin CloudKit échoue à l’ouverture.
+
+Voir [le périmètre, les contrôles et les limites](apple/IMPLEMENTATION-2026-11-09.md). Les descriptions antérieures des modules comme simples espaces de présentation sont dépassées dans cette branche. Code écrit ne signifie pas application compilée ou testée : aucune validation sur appareil ni publication TestFlight n’a été effectuée ici. Les assets UX Master 3.0 restent à récupérer.

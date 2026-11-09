@@ -5,6 +5,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct MainView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject private var router = AppRouter()
     @AppStorage("openEinsteinFromIntent") private var openEinsteinFromIntent = false
     @AppStorage("openNOVAFromIntent") private var openNOVAFromIntent = false
@@ -29,8 +30,12 @@ struct MainView: View {
                     MemorySearchView()
                 case .settings:
                     SettingsView()
-                case .organic, .fusion, .verso:
-                    DestinationPlaceholder(destination: router.destination)
+                case .organic:
+                    OrganicView()
+                case .fusion:
+                    FusionView()
+                case .verso:
+                    VersoView()
                 }
             }
             .frame(maxWidth: 1120, maxHeight: .infinity)
@@ -42,7 +47,7 @@ struct MainView: View {
                 .padding(.horizontal, 18)
                 .padding(.bottom, 8)
         }
-        .animation(.easeInOut(duration: 0.2), value: router.destination)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: router.destination)
         .preferredColorScheme(.light)
         .onAppear(perform: handleAppIntents)
         .onChange(of: openEinsteinFromIntent) {
@@ -260,49 +265,6 @@ private struct EinsteinStatusCard: View {
                 .stroke(.white.opacity(0.72), lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.045), radius: 16, x: 0, y: 8)
-        .accessibilityElement(children: .combine)
-    }
-}
-
-private struct DestinationPlaceholder: View {
-    let destination: EcrinDestination
-
-    private var description: String {
-        switch destination {
-        case .nova: return "Capture vocale et recherche dans vos échanges."
-        case .organic: return "Écoute, ambiances et accompagnement de vos moments de concentration."
-        case .fusion: return "Rassemblement visuel et transformation de vos contenus."
-        case .verso: return "Vues complémentaires et nouvelles lectures de vos contenus."
-        case .search: return "La recherche dans l’ensemble de vos univers est en préparation."
-        case .home, .atelier, .memoryOS, .einstein, .settings: return ""
-        }
-    }
-
-    var body: some View {
-        VStack(spacing: 18) {
-            Image(systemName: destination.symbol)
-                .font(.system(size: 30, weight: .ultraLight))
-                .foregroundStyle(Color(red: 0.29, green: 0.43, blue: 0.35))
-                .frame(width: 76, height: 76)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(.white.opacity(0.8), lineWidth: 1)
-                }
-            Text(destination.title)
-                .font(.system(size: 27, weight: .light, design: .serif))
-                .foregroundStyle(Color(red: 0.14, green: 0.22, blue: 0.18))
-            Text("Cet univers est en préparation.")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.secondary)
-            Text(description)
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 340)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(28)
         .accessibilityElement(children: .combine)
     }
 }
@@ -776,6 +738,7 @@ private struct MemoryComposerView: View {
     @State private var content = ""
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var showingFileImporter = false
+    @State private var fileImportTask: Task<Void, Never>?
     @State private var isAnalyzingImage = false
     @State private var isClassifying = false
     @State private var isGenerating = false
@@ -803,18 +766,20 @@ private struct MemoryComposerView: View {
                     Button {
                         showingFileImporter = true
                     } label: {
-                        Label("Importer un PDF ou un fichier texte", systemImage: "doc.badge.plus")
+                        Label("Importer un PDF, une image ou un texte", systemImage: "doc.badge.plus")
                     }
                     .disabled(isAnalyzingImage)
 
                     PhotosPicker(selection: $selectedPhoto, matching: .images) {
                         Label("Importer une image et lancer l’OCR", systemImage: "photo")
                     }
+                    .disabled(isAnalyzingImage)
                     .onChange(of: selectedPhoto) {
-                        Task { await analyzeSelectedPhoto() }
+                        fileImportTask?.cancel()
+                        fileImportTask = Task { await analyzeSelectedPhoto() }
                     }
                     if isAnalyzingImage {
-                        ProgressView("Analyse de l’image…")
+                        ProgressView("Lecture et OCR du document…")
                     }
                     if !visualLabels.isEmpty {
                         LabeledContent("Éléments détectés", value: visualLabels.joined(separator: ", "))
@@ -822,7 +787,7 @@ private struct MemoryComposerView: View {
                 }
                 .fileImporter(
                     isPresented: $showingFileImporter,
-                    allowedContentTypes: [.pdf, .plainText],
+                    allowedContentTypes: [.pdf, .image, .plainText],
                     allowsMultipleSelection: false,
                     onCompletion: importFile
                 )
@@ -909,9 +874,10 @@ private struct MemoryComposerView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Enregistrer", action: save)
-                        .disabled(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .disabled(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isAnalyzingImage)
                 }
             }
+            .onDisappear { fileImportTask?.cancel() }
             .alert("Analyse impossible", isPresented: errorIsPresented) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -935,10 +901,11 @@ private struct MemoryComposerView: View {
             guard let data = try await selectedPhoto.loadTransferable(type: Data.self) else {
                 throw CocoaError(.fileReadCorruptFile)
             }
-            let analysis = try await ImageAnalyzer.analyze(data)
+            let analysis = try await DocumentTextExtractor.extract(data, filename: "photo.jpg")
+            try Task.checkCancellation()
             visualLabels = analysis.labels
-            if !analysis.recognizedText.isEmpty {
-                content = [content, analysis.recognizedText]
+            if !analysis.text.isEmpty {
+                content = [content, analysis.text]
                     .filter { !$0.isEmpty }
                     .joined(separator: "\n")
             }
@@ -950,39 +917,22 @@ private struct MemoryComposerView: View {
     private func importFile(_ result: Result<[URL], Error>) {
         do {
             guard let url = try result.get().first else { return }
-            let hasAccess = url.startAccessingSecurityScopedResource()
-            defer {
-                if hasAccess {
-                    url.stopAccessingSecurityScopedResource()
-                }
+            fileImportTask?.cancel()
+            isAnalyzingImage = true
+            fileImportTask = Task { @MainActor in
+                do {
+                    let extracted = try await DocumentTextExtractor.read(url)
+                    try Task.checkCancellation()
+                    content = [content, extracted.text].filter { !$0.isEmpty }.joined(separator: "\n\n")
+                    visualLabels = Array(Set(visualLabels + extracted.labels)).sorted()
+                    if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        title = url.deletingPathExtension().lastPathComponent
+                    }
+                    isAnalyzingImage = false
+                } catch is CancellationError { }
+                catch { if !Task.isCancelled { errorMessage = error.localizedDescription; isAnalyzingImage = false } }
             }
-
-            let importedText: String
-            if url.pathExtension.lowercased() == "pdf" {
-                guard
-                    let document = PDFDocument(url: url),
-                    let text = document.string,
-                    !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                else {
-                    throw ImportError.pdfHasNoSelectableText
-                }
-                importedText = text
-            } else {
-                let data = try Data(contentsOf: url)
-                guard let text = String(data: data, encoding: .utf8) else {
-                    throw ImportError.unsupportedTextEncoding
-                }
-                importedText = text
-            }
-
-            let trimmed = importedText.trimmingCharacters(in: .whitespacesAndNewlines)
-            content = [content, trimmed].filter { !$0.isEmpty }.joined(separator: "\n\n")
-            if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                title = url.deletingPathExtension().lastPathComponent
-            }
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+        } catch { errorMessage = error.localizedDescription }
     }
 
     private func suggestClassification() async {
@@ -1044,6 +994,7 @@ private struct MemoryComposerView: View {
             try modelContext.save()
             dismiss()
         } catch {
+            modelContext.delete(item)
             errorMessage = error.localizedDescription
         }
     }
@@ -1055,19 +1006,7 @@ private struct MemoryComposerView: View {
             .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
     }
 
-    private enum ImportError: LocalizedError {
-        case pdfHasNoSelectableText
-        case unsupportedTextEncoding
 
-        var errorDescription: String? {
-            switch self {
-            case .pdfHasNoSelectableText:
-                return "Ce PDF ne contient pas de texte sélectionnable. Importez une image pour lancer l’OCR."
-            case .unsupportedTextEncoding:
-                return "Ce fichier texte n’est pas encodé en UTF-8."
-            }
-        }
-    }
 }
 
 struct SettingsView: View {
@@ -1179,3 +1118,4 @@ struct SettingsView: View {
         }
     }
 }
+
