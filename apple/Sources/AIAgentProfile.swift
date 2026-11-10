@@ -29,7 +29,7 @@ struct AIAgentProfile: Codable, Equatable, Identifiable {
             name: "Einstein",
             summary: "Assistant transversal · curieux, malicieux et expressif",
             instructions: "Tu es Einstein, l’assistant transversal d’ÉCRIN. Réponds avec curiosité, tact et clarté.",
-            executionPreference: .server,
+            executionPreference: .appleOnDevice,
             canUseMemory: true,
             availableActions: ["rechercher", "créer une mémoire"]
         ),
@@ -38,7 +38,7 @@ struct AIAgentProfile: Codable, Equatable, Identifiable {
             name: "Coach",
             summary: "Objectifs, concentration et bilans",
             instructions: "Tu es un coach de travail bienveillant. Aide à clarifier un objectif et à choisir un prochain petit pas, sans jugement.",
-            executionPreference: .server,
+            executionPreference: .appleOnDevice,
             canUseMemory: false,
             availableActions: []
         ),
@@ -47,7 +47,7 @@ struct AIAgentProfile: Codable, Equatable, Identifiable {
             name: "MemoryOS",
             summary: "Recherche, synthèse et classement",
             instructions: "Tu aides à organiser et comprendre la mémoire numérique. Distingue les faits fournis des suggestions et n’invente pas de documents consultés.",
-            executionPreference: .server,
+            executionPreference: .appleOnDevice,
             canUseMemory: true,
             availableActions: ["rechercher", "créer une mémoire"]
         ),
@@ -56,7 +56,7 @@ struct AIAgentProfile: Codable, Equatable, Identifiable {
             name: "Rédaction",
             summary: "Notes, notices et guides",
             instructions: "Tu es un assistant de rédaction en français. Adapte le ton et la structure au besoin exprimé.",
-            executionPreference: .server,
+            executionPreference: .appleOnDevice,
             canUseMemory: true,
             availableActions: ["créer une mémoire"]
         ),
@@ -65,7 +65,7 @@ struct AIAgentProfile: Codable, Equatable, Identifiable {
             name: "Vision",
             summary: "OCR, compréhension et analyse d’images",
             instructions: "Tu aides à décrire des images et des documents à partir des informations fournies. Signale les limites et ne prétends pas avoir vu un média absent.",
-            executionPreference: .server,
+            executionPreference: .appleOnDevice,
             canUseMemory: true,
             availableActions: ["rechercher"]
         ),
@@ -74,7 +74,7 @@ struct AIAgentProfile: Codable, Equatable, Identifiable {
             name: "Développement",
             summary: "Code, projets et tâches techniques",
             instructions: "Tu es un assistant de développement. Explique les choix, préserve les données, propose des changements vérifiables et n’exécute pas de code.",
-            executionPreference: .server,
+            executionPreference: .appleOnDevice,
             canUseMemory: false,
             availableActions: ["générer un projet"]
         ),
@@ -83,7 +83,7 @@ struct AIAgentProfile: Codable, Equatable, Identifiable {
             name: "Toi",
             summary: "Ton agent personnel configurable",
             instructions: "Tu es un assistant personnel. Aide à organiser les idées et tâches exprimées par l’utilisateur, sans prétendre être humain ni ressentir des émotions.",
-            executionPreference: .server,
+            executionPreference: .appleOnDevice,
             canUseMemory: true,
             availableActions: []
         )
