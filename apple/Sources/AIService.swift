@@ -55,6 +55,7 @@ enum DocumentKind: String, Encodable, Sendable {
 }
 
 enum AIServiceError: LocalizedError {
+    case remoteDisabled
     case missingServer
     case invalidServerURL
     case badResponse(Int)
@@ -62,6 +63,8 @@ enum AIServiceError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
+        case .remoteDisabled:
+            return "Mode gratuit : les services IA distants sont désactivés. Utilisez Apple Intelligence sur cet appareil."
         case .missingServer:
             return "Configurez l’adresse HTTPS de votre serveur IA dans Réglages."
         case .invalidServerURL:
@@ -75,6 +78,7 @@ enum AIServiceError: LocalizedError {
 }
 
 struct AIService {
+    private var remoteAIEnabled: Bool { false }
     private let session: URLSession
     static let serverConfigurationLabel = "Serveur IA"
 
@@ -106,6 +110,15 @@ struct AIService {
         history: [ConversationTurn],
         apiToken: String,
         serverAddress: String
+    ) async throws -> AssistantAnswer {
+        let prompt = (history.suffix(20).map { "\($0.role): \($0.content)" } + ["user: \(question)"]).joined(separator: "\n")
+        let answer = try await AppleIntelligenceService.answer(prompt, instructions: agent.instructions)
+        return AssistantAnswer(answer: answer, provider: "apple-on-device")
+    }
+
+    private func remoteAskDisabled(
+        _ question: String, agent: AIAgentProfile, history: [ConversationTurn],
+        apiToken: String, serverAddress: String
     ) async throws -> AssistantAnswer {
         let url = try endpoint(path: "/api/ask", serverAddress: serverAddress)
         var request = URLRequest(url: url)
@@ -164,6 +177,7 @@ struct AIService {
     }
 
     private func endpoint(path: String, serverAddress: String) throws -> URL {
+        guard remoteAIEnabled else { throw AIServiceError.remoteDisabled }
         guard !serverAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw AIServiceError.missingServer
         }
