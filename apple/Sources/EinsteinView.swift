@@ -4,6 +4,7 @@ import SwiftData
 import SwiftUI
 
 struct EinsteinView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.modelContext) private var modelContext
     @AppStorage("aiServerAddress") private var aiServerAddress = ""
     @Query(sort: \MemoryItem.createdAt, order: .reverse) private var memories: [MemoryItem]
@@ -20,6 +21,8 @@ struct EinsteinView: View {
     @State private var errorMessage: String?
     @State private var savedMessage: String?
     @State private var showingTransferConfirmation = false
+    @State private var activeRequestID: UUID?
+    @State private var answeredQuestion = ""
 
     init(profile: AIAgentProfile = AIAgentProfile.builtIns[0]) {
         _activeProfile = State(initialValue: profile)
@@ -36,7 +39,7 @@ struct EinsteinView: View {
                                 .foregroundStyle(Color(red: 0.29, green: 0.43, blue: 0.35))
                                 .frame(width: 52, height: 52)
                                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 17))
-                                .symbolEffect(.pulse, isActive: state == .listening || state == .processing)
+                                .symbolEffect(.pulse, isActive: !reduceMotion && (state == .listening || state == .processing))
                                 .accessibilityLabel(state.label)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(activeProfile.name)
@@ -212,6 +215,10 @@ struct EinsteinView: View {
                     errorMessage = error.localizedDescription
                     state = .error
                 }
+                speechOutput.onFailure = { message in
+                    errorMessage = "La réponse est disponible en texte, mais la lecture audio a échoué : \(message)"
+                    state = .error
+                }
                 speechOutput.onFinish = {
                     if state == .responding {
                         state = .ready
@@ -219,6 +226,7 @@ struct EinsteinView: View {
                 }
             }
             .onDisappear {
+                activeRequestID = nil
                 speechCapture.stop()
                 speechOutput.stop()
                 nearbyHandoff.stop()
@@ -250,6 +258,7 @@ struct EinsteinView: View {
                     speechOutput.stop()
                     activeProfile = transfer.profile
                     question = transfer.question
+                    answeredQuestion = transfer.question
                     answer = transfer.answer
                     conversationHistory = transfer.history
                     includeMemoryContext = false
@@ -273,6 +282,7 @@ struct EinsteinView: View {
             state = .ready
             return
         }
+        speechOutput.stop()
         state = .authorizing
         Task {
             do {
@@ -300,16 +310,20 @@ struct EinsteinView: View {
 
     private func askEinstein() async {
         let userQuestion = question.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !userQuestion.isEmpty else { return }
+        guard !userQuestion.isEmpty, state != .processing else { return }
         guard userQuestion.count <= 12000 else {
             errorMessage = "Votre question dépasse la limite de 12 000 caractères."
             state = .error
             return
         }
+        speechCapture.stop()
+        speechOutput.stop()
         errorMessage = nil
         savedMessage = nil
         answer = ""
         state = .processing
+        let requestID = UUID()
+        activeRequestID = requestID
         do {
             let context = includeMemoryContext ? relevantMemory(for: userQuestion) : []
             let prompt: String
@@ -354,6 +368,9 @@ struct EinsteinView: View {
                     instructions: activeProfile.instructions
                 )
             }
+            guard activeRequestID == requestID else { return }
+            activeRequestID = nil
+            answeredQuestion = userQuestion
             answer = responseText
             conversationHistory.append(.user(userQuestion))
             conversationHistory.append(.assistant(responseText))
@@ -361,6 +378,8 @@ struct EinsteinView: View {
             state = .responding
             speechOutput.speak(responseText)
         } catch {
+            guard activeRequestID == requestID else { return }
+            activeRequestID = nil
             errorMessage = error.localizedDescription
             state = .error
         }
@@ -369,7 +388,7 @@ struct EinsteinView: View {
     private func saveExchange() {
         let item = MemoryItem(
             title: "Échange avec \(activeProfile.name)",
-            content: "Question :\n\(question)\n\nRéponse :\n\(answer)",
+            content: "Question :\n\(answeredQuestion)\n\nRéponse :\n\(answer)",
             createdAt: .now
         )
         item.summary = String(answer.prefix(240))
@@ -394,7 +413,7 @@ struct EinsteinView: View {
             try nearbyHandoff.send(
                 EinsteinHandoffPayload(
                     profile: activeProfile,
-                    question: question,
+                    question: answer.isEmpty ? question : answeredQuestion,
                     answer: answer,
                     history: Array(conversationHistory.suffix(8))
                 ),
@@ -455,6 +474,7 @@ private enum EinsteinViewError: LocalizedError {
 private final class SpeechOutputService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     @Published private(set) var isSpeaking = false
     var onFinish: (() -> Void)?
+    var onFailure: ((String) -> Void)?
 
     private let synthesizer = AVSpeechSynthesizer()
 
@@ -464,6 +484,17 @@ private final class SpeechOutputService: NSObject, ObservableObject, AVSpeechSyn
     }
 
     func speak(_ text: String) {
+        stop()
+#if os(iOS)
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+            try session.setActive(true)
+        } catch {
+            onFailure?(error.localizedDescription)
+            return
+        }
+#endif
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: "fr-FR")
         isSpeaking = true
@@ -473,6 +504,13 @@ private final class SpeechOutputService: NSObject, ObservableObject, AVSpeechSyn
     func stop() {
         synthesizer.stopSpeaking(at: .immediate)
         isSpeaking = false
+        deactivateSession()
+    }
+
+    private func deactivateSession() {
+#if os(iOS)
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+#endif
     }
 
     func speechSynthesizer(
@@ -480,6 +518,7 @@ private final class SpeechOutputService: NSObject, ObservableObject, AVSpeechSyn
         didFinish utterance: AVSpeechUtterance
     ) {
         isSpeaking = false
+        deactivateSession()
         onFinish?()
     }
 
@@ -487,7 +526,7 @@ private final class SpeechOutputService: NSObject, ObservableObject, AVSpeechSyn
         _ synthesizer: AVSpeechSynthesizer,
         didCancel utterance: AVSpeechUtterance
     ) {
-        isSpeaking = false
+        // stop() owns the state update; an older cancellation can arrive after speak().
     }
 }
 
@@ -510,3 +549,4 @@ private enum AssistantState: Equatable {
         }
     }
 }
+

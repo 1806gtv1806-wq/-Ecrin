@@ -48,3 +48,15 @@ targets:
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: Ecrin analyse les images que vous choisissez.
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Ecrin utilise le microphone lorsque vous dictez une question à Einstein.
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: Ecrin transcrit votre question vocale pour Einstein.
+
+  Ecrin-iOSTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests
+    dependencies:
+      - target: Ecrin-iOS
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"
+        GENERATE_INFOPLIST_FILE: YES
